@@ -41,7 +41,6 @@ export class GDriveAppData {
                     reject(new Error(`Error signing in: ${tokenResponse.error}\n${tokenResponse.error_description}`));
                 }
                 else {
-                    console.log('valid for: ' + tokenResponse.expires_in);
                     this.accessToken = tokenResponse.access_token;
                     resolve();
                 }
@@ -71,7 +70,6 @@ export class GDriveAppData {
                 body: content,
             };
             if (files.length === 0) {
-                console.log('creating new');
                 // Create new
                 return gapi.client.drive.files.create({
                     resource: fileMetadata,
@@ -85,7 +83,6 @@ export class GDriveAppData {
             if (fileId === undefined) {
                 throw new Error('File ID is undefined');
             }
-            console.log('updating ' + fileId);
             return gapi.client.request({
                 path: `https://www.googleapis.com/upload/drive/v3/files/${fileId}`,
                 method: 'PATCH',
@@ -107,12 +104,10 @@ export class GDriveAppData {
             .then(listRes => {
             const files = listRes.result.files || [];
             if (files.length === 0) {
-                console.log('doesnt exist');
                 return '';
             }
             const fileId = files[0].id;
             if (fileId === undefined) {
-                console.log('id undefined');
                 return '';
             }
             // Download the file

@@ -2,11 +2,8 @@ var _a, _b, _c, _d;
 import { Deck } from './deck.js';
 import { GDriveAppData } from './drive.js';
 const LOCAL_STORAGE_KEY = 'ddd';
-function gapiLoaded() {
-    console.log('gapi loaded');
-}
-function gsiLoaded() {
-    console.log('gsi loaded');
+function log(text) {
+    document.getElementById('log').textContent += text + '\n';
 }
 // Fit text in an element by adjusting font size
 function setTextAndFit(el, text, minSize = 10, maxSize = 100) {
@@ -47,7 +44,7 @@ function init() {
     })
         .catch(error => console.error('Error loading genus: ', error));
     drive.init()
-        .then(() => console.log('GDriveAppData initialized'))
+        .then(() => log('GDriveAppData initialized'))
         .catch(error => console.error('Error initializing GDriveAppData: ', error));
 }
 function begin() {
@@ -68,8 +65,12 @@ function draw() {
     const button = document.getElementById('btn-login');
     button.disabled = true;
     drive.signIn()
-        .then(() => drive.load())
+        .then(() => {
+        log('Signed in');
+        return drive.load();
+    })
         .then(data => {
+        log('Loaded');
         localStorage.setItem(LOCAL_STORAGE_KEY, data);
         begin();
         button.style.visibility = "hidden";
