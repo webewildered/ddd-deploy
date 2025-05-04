@@ -64,18 +64,21 @@ function draw() {
 (_d = document.getElementById('btn-login')) === null || _d === void 0 ? void 0 : _d.addEventListener('click', () => {
     const button = document.getElementById('btn-login');
     button.disabled = true;
-    drive.signIn()
-        .then(() => {
-        log('Signed in');
-        return drive.load();
-    })
-        .then(data => {
-        log('Loaded');
-        localStorage.setItem(LOCAL_STORAGE_KEY, data);
-        begin();
-        button.style.visibility = "hidden";
-    })
-        .catch(error => console.error('Error signing in or loading data: ', error));
+    drive.signIn((error) => {
+        if (error) {
+            log('Sign in error: ' + error.message);
+        }
+        else {
+            drive.load()
+                .then(data => {
+                log('Loaded');
+                localStorage.setItem(LOCAL_STORAGE_KEY, data);
+                begin();
+                button.style.visibility = "hidden";
+            })
+                .catch(error => console.error('Error loading data: ', error));
+        }
+    });
 });
 function chooseAnswer(answer) {
     if (!question)

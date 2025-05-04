@@ -6,7 +6,7 @@ const FILENAME = 'ddd.txt';
 export class GDriveAppData {
     constructor() {
         this.accessToken = null;
-        this.tokenCallback = null;
+        this.signInCallback = null;
         this.tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: SCOPES,
@@ -14,9 +14,15 @@ export class GDriveAppData {
         });
     }
     onTokenResponse(tokenResponse) {
-        if (this.tokenCallback !== null) {
-            this.tokenCallback(tokenResponse);
-            this.tokenCallback = null;
+        if (this.signInCallback !== null) {
+            if (tokenResponse.error) {
+                this.signInCallback(new Error(`Error signing in: ${tokenResponse.error}\n${tokenResponse.error_description}`));
+            }
+            else {
+                this.accessToken = tokenResponse.access_token;
+                this.signInCallback(null);
+            }
+            this.signInCallback = null;
         }
     }
     init() {
@@ -31,22 +37,14 @@ export class GDriveAppData {
             });
         });
     }
-    signIn() {
-        if (this.tokenCallback !== null) {
-            return Promise.reject(new Error('Login already in progress'));
+    signIn(signInCallback) {
+        if (this.signInCallback !== null) {
+            signInCallback(new Error('Login already in progress'));
         }
-        return new Promise((resolve, reject) => {
-            this.tokenCallback = tokenResponse => {
-                if (tokenResponse.error) {
-                    reject(new Error(`Error signing in: ${tokenResponse.error}\n${tokenResponse.error_description}`));
-                }
-                else {
-                    this.accessToken = tokenResponse.access_token;
-                    resolve();
-                }
-            };
+        else {
+            this.signInCallback = signInCallback;
             this.tokenClient.requestAccessToken({ prompt: 'none' });
-        });
+        }
     }
     isSignedIn() {
         return this.accessToken !== null;
