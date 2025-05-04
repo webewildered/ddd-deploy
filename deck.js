@@ -69,11 +69,17 @@ export class Deck {
         this.removedWords = new Set();
         // Load stored cards
         const seen = new Set();
-        if (userData) {
-            const obj = JSON.parse(userData);
-            for (const sc of obj.cards) {
-                seen.add(sc.word);
-                this.cards.push({ word: sc.word, date: new Date(sc.date), level: sc.level });
+        if (userData != null && userData.length > 0) {
+            try {
+                const obj = JSON.parse(userData);
+                for (const sc of obj.cards) {
+                    seen.add(sc.word);
+                    this.cards.push({ word: sc.word, date: new Date(sc.date), level: sc.level });
+                }
+                console.log('Loaded ' + this.cards.length + ' cards from user data');
+            }
+            catch (e) {
+                console.error('Error parsing user data: ', e);
             }
         }
         // Load core word list
