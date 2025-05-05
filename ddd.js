@@ -3,7 +3,8 @@ import { Deck } from './deck.js';
 import { GDriveAppData } from './drive.js';
 const LOCAL_STORAGE_KEY = 'ddd';
 function log(text) {
-    document.getElementById('log').textContent += text + '\n';
+    console.log(text);
+    //document.getElementById('log')!.textContent += text + '\n';
 }
 // Fit text in an element by adjusting font size
 function setTextAndFit(el, text, minSize = 10, maxSize = 100) {
