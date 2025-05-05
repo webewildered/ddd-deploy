@@ -16,6 +16,11 @@ export class GDriveAppData {
     onTokenResponse(tokenResponse) {
         if (this.signInCallback !== null) {
             if (tokenResponse.error) {
+                if (tokenResponse.error === 'interaction_required') {
+                    // Try again with interaction
+                    this.tokenClient.requestAccessToken({ prompt: '' });
+                    return;
+                }
                 this.signInCallback(new Error(`Error signing in: ${tokenResponse.error}\n${tokenResponse.error_description}`));
             }
             else {
