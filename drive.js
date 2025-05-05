@@ -10,23 +10,14 @@ export class GDriveAppData {
         this.tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: SCOPES,
-            callback: tokenResponse => this.onTokenResponse(tokenResponse)
+            callback: tokenResponse => this.onTokenResponse(tokenResponse.access_token, tokenResponse.error),
+            error_callback: error => this.onTokenResponse(null, error.message),
         });
     }
-    onTokenResponse(tokenResponse) {
+    onTokenResponse(accessToken, error) {
         if (this.signInCallback !== null) {
-            if (tokenResponse.error) {
-                if (tokenResponse.error === 'interaction_required') {
-                    // Try again with interaction
-                    this.tokenClient.requestAccessToken({ prompt: '' });
-                    return;
-                }
-                this.signInCallback(new Error(`Error signing in: ${tokenResponse.error}\n${tokenResponse.error_description}`));
-            }
-            else {
-                this.accessToken = tokenResponse.access_token;
-                this.signInCallback(null);
-            }
+            this.accessToken = accessToken;
+            this.signInCallback(null);
             this.signInCallback = null;
         }
     }
@@ -48,7 +39,7 @@ export class GDriveAppData {
         }
         else {
             this.signInCallback = signInCallback;
-            this.tokenClient.requestAccessToken({ prompt: 'none' });
+            this.tokenClient.requestAccessToken({ prompt: '' });
         }
     }
     isSignedIn() {

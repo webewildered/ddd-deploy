@@ -44,7 +44,9 @@ function init() {
     })
         .catch(error => console.error('Error loading genus: ', error));
     drive.init()
-        .then(() => log('GDriveAppData initialized'))
+        .then(() => {
+        log('GDriveAppData initialized');
+    })
         .catch(error => console.error('Error initializing GDriveAppData: ', error));
 }
 function begin() {
