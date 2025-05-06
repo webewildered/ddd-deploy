@@ -28,6 +28,7 @@ function setTextAndFit(el, text, minSize = 10, maxSize = 100) {
             high = mid - 1;
         }
     }
+    console.log('fit: ' + best);
     el.style.fontSize = `${best}rem`;
 }
 let deck;
