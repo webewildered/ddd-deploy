@@ -35,6 +35,10 @@ export class GDriveAppData {
     isSignedIn() {
         return this.tokenData !== null && new Date(this.tokenData.expiration) > new Date();
     }
+    clearSignIn() {
+        this.tokenData = null;
+        localStorage.removeItem(LOCAL_TOKEN_KEY);
+    }
     init() {
         // Load saved token
         const tokenDataStr = localStorage.getItem(LOCAL_TOKEN_KEY);
@@ -45,7 +49,12 @@ export class GDriveAppData {
                     apiKey: API_KEY,
                     discoveryDocs: [DISCOVERY_DOC]
                 })
-                    .then(() => resolve())
+                    .then(() => {
+                    if (this.isSignedIn()) {
+                        gapi.client.setToken({ access_token: this.tokenData.token });
+                    }
+                    resolve();
+                })
                     .catch((error) => reject(error));
             });
         });

@@ -95,6 +95,8 @@ export class Deck {
         this.newWords.reverse();
         this.removedWords = seen;
     }
+    getNumCards() { return this.cards.length; }
+    getNumWords() { return this.newWords.length + this.cards.length; }
     save() {
         const stored = this.cards.map(c => ({ word: c.word, date: c.date.toISOString(), level: c.level }));
         return JSON.stringify({ version: 0, cards: stored });
