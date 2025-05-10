@@ -3,25 +3,42 @@ const API_KEY = 'AIzaSyBZC2CEvNyjdJYH4-31LNAYFpD2F7Plny0';
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 const FILENAME = 'ddd.txt';
+const LOCAL_TOKEN_KEY = 'ddd_token';
 export class GDriveAppData {
     constructor() {
-        this.accessToken = null;
         this.signInCallback = null;
+        this.tokenData = null;
         this.tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: SCOPES,
-            callback: tokenResponse => this.onTokenResponse(tokenResponse.access_token, tokenResponse.error),
+            callback: tokenResponse => {
+                let lifetimeSec = Number(tokenResponse.expires_in) - 60;
+                this.tokenData = {
+                    token: tokenResponse.access_token,
+                    expiration: new Date(Date.now() + lifetimeSec * 1000).toISOString()
+                };
+                localStorage.setItem(LOCAL_TOKEN_KEY, JSON.stringify(this.tokenData));
+                this.onTokenResponse(tokenResponse.access_token, tokenResponse.error);
+            },
             error_callback: error => this.onTokenResponse(null, error.message),
         });
     }
     onTokenResponse(accessToken, error) {
         if (this.signInCallback !== null) {
-            this.accessToken = accessToken;
             this.signInCallback(null);
             this.signInCallback = null;
         }
     }
+    wasSignedIn() {
+        return this.tokenData !== null;
+    }
+    isSignedIn() {
+        return this.tokenData !== null && new Date(this.tokenData.expiration) > new Date();
+    }
     init() {
+        // Load saved token
+        const tokenDataStr = localStorage.getItem(LOCAL_TOKEN_KEY);
+        this.tokenData = tokenDataStr ? JSON.parse(tokenDataStr) : null;
         return new Promise((resolve, reject) => {
             gapi.load('client', () => {
                 gapi.client.init({
@@ -41,9 +58,6 @@ export class GDriveAppData {
             this.signInCallback = signInCallback;
             this.tokenClient.requestAccessToken({ prompt: '' });
         }
-    }
-    isSignedIn() {
-        return this.accessToken !== null;
     }
     save(content) {
         // First, check if file exists

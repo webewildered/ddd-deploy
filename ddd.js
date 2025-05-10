@@ -2,13 +2,8 @@ var _a, _b, _c;
 import { Deck } from './deck.js';
 import { GDriveAppData } from './drive.js';
 const LOCAL_STORAGE_KEY = 'ddd';
-const LOCAL_TOKEN_KEY = 'ddd';
 const gamePage = document.getElementById('game');
 const splashPage = document.getElementById('splash');
-let tokenData = null;
-function isTokenValid() {
-    return tokenData !== null && new Date(tokenData.expiration) > new Date();
-}
 function log(text) {
     console.log(text);
     //document.getElementById('log')!.textContent += text + '\n';
@@ -21,21 +16,22 @@ function setTextAndFit(el, text, minSize = 10, maxSize = 100) {
     el.style.display = 'inline-block';
     let low = minSize;
     let high = maxSize;
-    const res = 0.25;
-    while (low <= high - res) {
+    let best = minSize;
+    while (low <= high) {
         const mid = Math.floor((low + high) / 2);
         el.style.fontSize = `${mid}rem`;
         const fitsWidth = el.scrollWidth <= el.clientWidth;
         const fitsHeight = el.scrollHeight <= el.clientHeight;
         if (fitsWidth && fitsHeight) {
-            low = mid;
+            best = mid;
+            low = mid + 1;
         }
         else {
-            high = mid;
+            high = mid - 1;
         }
     }
-    console.log('fit: ' + low);
-    el.style.fontSize = `${low}rem`;
+    console.log('fit: ' + best);
+    el.style.fontSize = `${best}rem`;
 }
 let deck;
 let question = null;
@@ -73,17 +69,12 @@ function init() {
     Promise.all([loadGenus, loadDrive])
         .then(() => {
         log('All loaded');
-        // Check for a token
-        const tokenDataStr = localStorage.getItem(LOCAL_TOKEN_KEY);
-        if (tokenDataStr) {
-            tokenData = JSON.parse(tokenDataStr);
-            if (isTokenValid()) {
-                begin(); // User is already logged in
-            }
-            else {
-                // User logged in previously but the token expired. They probably want to log in.
-                showSplash();
-            }
+        if (drive.isSignedIn()) {
+            begin(); // User is already logged in
+        }
+        else if (drive.wasSignedIn()) {
+            // User logged in previously but the token expired. They probably want to log in.
+            showSplash();
         }
         else {
             // User never logged in, start the game and they can log in later if they want.
@@ -104,7 +95,7 @@ function draw() {
 (_a = document.getElementById('btn-der')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', () => chooseAnswer('m'));
 (_b = document.getElementById('btn-die')) === null || _b === void 0 ? void 0 : _b.addEventListener('click', () => chooseAnswer('f'));
 (_c = document.getElementById('btn-das')) === null || _c === void 0 ? void 0 : _c.addEventListener('click', () => chooseAnswer('n'));
-const splashLoginButton = document.getElementById('g_id_signin');
+const splashLoginButton = document.getElementById('btn-splashLogin');
 const lateLoginButton = document.getElementById('btn-login');
 function onLogin() {
     drive.signIn((error) => {
@@ -127,8 +118,10 @@ function onLogin() {
 }
 splashLoginButton.addEventListener('click', onLogin);
 lateLoginButton.addEventListener('click', onLogin);
-const skipLogin = document.getElementById('skipLogin');
-skipLogin.addEventListener('click', begin);
+const skipLogin = document.getElementById('btn-skipLogin');
+skipLogin.addEventListener('click', (event) => {
+    begin();
+});
 function chooseAnswer(answer) {
     if (!question)
         return;
