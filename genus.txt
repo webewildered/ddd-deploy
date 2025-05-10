@@ -400,7 +400,7 @@ Vertreter m
 Krankenhaus n
 Halle f
 Kategorie f
-Schluß m
+Schluss m
 Wettbewerb m
 Anteil m
 Anzahl f
@@ -483,7 +483,6 @@ Gottesdienst m
 Lied n
 Rat m
 Urlaub m
-Franken m
 Verwaltung f
 Gelegenheit f
 Versuch m
@@ -3066,7 +3065,7 @@ Nährstoff m
 Brandenburger m
 Meilenstein m
 Dekoration f
-Riß f
+Riss f
 Physik f
 Gesichtspunkt m
 Mehrwertsteuer f

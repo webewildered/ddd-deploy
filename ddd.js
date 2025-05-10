@@ -1,7 +1,14 @@
-var _a, _b, _c, _d;
+var _a, _b, _c;
 import { Deck } from './deck.js';
 import { GDriveAppData } from './drive.js';
 const LOCAL_STORAGE_KEY = 'ddd';
+const LOCAL_TOKEN_KEY = 'ddd';
+const gamePage = document.getElementById('game');
+const splashPage = document.getElementById('splash');
+let tokenData = null;
+function isTokenValid() {
+    return tokenData !== null && new Date(tokenData.expiration) > new Date();
+}
 function log(text) {
     console.log(text);
     //document.getElementById('log')!.textContent += text + '\n';
@@ -14,49 +21,81 @@ function setTextAndFit(el, text, minSize = 10, maxSize = 100) {
     el.style.display = 'inline-block';
     let low = minSize;
     let high = maxSize;
-    let best = minSize;
-    while (low <= high) {
+    const res = 0.25;
+    while (low <= high - res) {
         const mid = Math.floor((low + high) / 2);
         el.style.fontSize = `${mid}rem`;
         const fitsWidth = el.scrollWidth <= el.clientWidth;
         const fitsHeight = el.scrollHeight <= el.clientHeight;
         if (fitsWidth && fitsHeight) {
-            best = mid;
-            low = mid + 1;
+            low = mid;
         }
         else {
-            high = mid - 1;
+            high = mid;
         }
     }
-    console.log('fit: ' + best);
-    el.style.fontSize = `${best}rem`;
+    console.log('fit: ' + low);
+    el.style.fontSize = `${low}rem`;
 }
 let deck;
 let question = null;
 let drive = new GDriveAppData();
 let genus = null;
+function hideElement(page) {
+    page.style.display = 'none';
+}
+function showElement(page) {
+    page.style.display = 'flex';
+}
+function showSplash() {
+    hideElement(gamePage);
+    showElement(splashPage);
+}
+function showGame() {
+    hideElement(splashPage);
+    showElement(gamePage);
+}
 // Initialize the application
 function init() {
     // Load the app data
-    fetch('genus.txt')
+    const loadGenus = fetch('genus.txt')
         .then(res => res.text())
         .then(genusText => {
+        log('Genus loaded');
         genus = genusText;
-        begin();
     })
         .catch(error => console.error('Error loading genus: ', error));
-    drive.init()
-        .then(() => {
-        log('GDriveAppData initialized');
-    })
+    // Load the Google Drive API
+    const loadDrive = drive.init()
+        .then(() => log('GDriveAppData initialized'))
         .catch(error => console.error('Error initializing GDriveAppData: ', error));
+    // After everything loads
+    Promise.all([loadGenus, loadDrive])
+        .then(() => {
+        log('All loaded');
+        // Check for a token
+        const tokenDataStr = localStorage.getItem(LOCAL_TOKEN_KEY);
+        if (tokenDataStr) {
+            tokenData = JSON.parse(tokenDataStr);
+            if (isTokenValid()) {
+                begin(); // User is already logged in
+            }
+            else {
+                // User logged in previously but the token expired. They probably want to log in.
+                showSplash();
+            }
+        }
+        else {
+            // User never logged in, start the game and they can log in later if they want.
+            begin();
+        }
+    });
 }
 function begin() {
-    if (genus) {
-        const stored = localStorage.getItem(LOCAL_STORAGE_KEY) || '';
-        deck = new Deck(genus, stored);
-        draw();
-    }
+    showGame();
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY) || '';
+    deck = new Deck(genus, stored);
+    draw();
 }
 function draw() {
     question = deck.draw();
@@ -65,9 +104,9 @@ function draw() {
 (_a = document.getElementById('btn-der')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', () => chooseAnswer('m'));
 (_b = document.getElementById('btn-die')) === null || _b === void 0 ? void 0 : _b.addEventListener('click', () => chooseAnswer('f'));
 (_c = document.getElementById('btn-das')) === null || _c === void 0 ? void 0 : _c.addEventListener('click', () => chooseAnswer('n'));
-(_d = document.getElementById('btn-login')) === null || _d === void 0 ? void 0 : _d.addEventListener('click', () => {
-    const button = document.getElementById('btn-login');
-    button.disabled = true;
+const splashLoginButton = document.getElementById('g_id_signin');
+const lateLoginButton = document.getElementById('btn-login');
+function onLogin() {
     drive.signIn((error) => {
         if (error) {
             log('Sign in error: ' + error.message);
@@ -76,14 +115,20 @@ function draw() {
             drive.load()
                 .then(data => {
                 log('Loaded');
-                localStorage.setItem(LOCAL_STORAGE_KEY, data);
-                begin();
-                button.style.visibility = "hidden";
+                if (data.length > 0) {
+                    localStorage.setItem(LOCAL_STORAGE_KEY, data);
+                    begin();
+                } // else, probably first login, so keep the local data
+                lateLoginButton.style.visibility = "hidden";
             })
-                .catch(error => console.error('Error loading data: ', error));
+                .catch(error => log('Error loading data: ' + error));
         }
     });
-});
+}
+splashLoginButton.addEventListener('click', onLogin);
+lateLoginButton.addEventListener('click', onLogin);
+const skipLogin = document.getElementById('skipLogin');
+skipLogin.addEventListener('click', begin);
 function chooseAnswer(answer) {
     if (!question)
         return;
