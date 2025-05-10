@@ -70,6 +70,7 @@ function init() {
         .then(() => {
         log('All loaded');
         if (drive.isSignedIn()) {
+            lateLoginButton.style.visibility = "hidden";
             begin(); // User is already logged in
         }
         else if (drive.wasSignedIn()) {
