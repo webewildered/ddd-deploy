@@ -21,25 +21,26 @@ function setTextAndFit(el, text, minSize = 10, maxSize = 100) {
     el.style.display = 'inline-block';
     let low = minSize;
     let high = maxSize;
-    let best = minSize;
-    while (low <= high) {
-        const mid = Math.floor((low + high) / 2);
-        el.style.fontSize = `${mid}rem`;
+    let test = high;
+    const res = 0.25;
+    while (low <= high - res) {
+        el.style.fontSize = `${test}rem`;
         const fitsWidth = el.scrollWidth <= el.clientWidth;
         const fitsHeight = el.scrollHeight <= el.clientHeight;
         if (fitsWidth && fitsHeight) {
-            best = mid;
-            low = mid + 1;
+            low = test;
         }
         else {
-            high = mid - 1;
+            high = test;
         }
+        test = (low + high) / 2;
     }
-    console.log('fit: ' + best);
-    el.style.fontSize = `${best}rem`;
+    console.log('fit: ' + low);
+    el.style.fontSize = `${low}rem`;
 }
 let deck;
 let question = null;
+let lastWord = null;
 let drive = new GDriveAppData();
 let genus = null;
 function hideElement(page) {
@@ -80,13 +81,16 @@ function init() {
             setLoggedIn(true);
             begin(); // User is already logged in
         }
-        else if (drive.wasSignedIn()) {
-            // User logged in previously but the token expired. They probably want to log in.
-            showPage(splashPage);
-        }
         else {
-            // User never logged in, start the game and they can log in later if they want.
-            begin();
+            setLoggedIn(false);
+            if (drive.wasSignedIn()) {
+                // User logged in previously but the token expired. They probably want to log in.
+                showPage(splashPage);
+            }
+            else {
+                // User never logged in, start the game and they can log in later if they want.
+                begin();
+            }
         }
     });
 }
@@ -101,6 +105,7 @@ function begin() {
 }
 function draw() {
     question = deck.draw();
+    lastWord = question.card.word;
     setTextAndFit(document.getElementById('word'), question.card.word, 1, 4);
 }
 (_a = document.getElementById('btn-der')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', () => chooseAnswer('m'));
@@ -128,13 +133,24 @@ function onLogin() {
     });
 }
 splashLoginButton.addEventListener('click', onLogin);
-lateLoginButton.addEventListener('click', onLogin);
+lateLoginButton.addEventListener('click', () => {
+    closeHamburger();
+    onLogin();
+});
+const logoutButton = document.getElementById('btn-logout');
+logoutButton.addEventListener('click', () => {
+    closeHamburger();
+    drive.clearSignIn();
+    setLoggedIn(false);
+});
 function setLoggedIn(loggedIn) {
     if (loggedIn) {
-        lateLoginButton.style.visibility = "hidden";
+        lateLoginButton.style.display = "none";
+        logoutButton.style.display = "block";
     }
     else {
-        lateLoginButton.style.visibility = "visible";
+        lateLoginButton.style.display = "block";
+        logoutButton.style.display = "none";
     }
 }
 const skipLogin = document.getElementById('btn-skipLogin');
@@ -169,6 +185,11 @@ const statsOkButton = document.getElementById('btn-statsOk');
 statsOkButton.addEventListener('click', () => {
     showPage(gamePage);
 });
+const dictButton = document.getElementById('btn-dict');
+dictButton.addEventListener('click', () => {
+    location.href = 'https://de.wiktionary.org/wiki/' + (lastWord || '');
+    closeHamburger();
+});
 const hamburgerButton = document.getElementById('btn-hamburger');
 const hamburgerIcon = document.getElementById('hamburgerIcon');
 let hamburgerOpen = false;
@@ -197,28 +218,33 @@ hamburgerButton.addEventListener('click', () => {
 function chooseAnswer(answer) {
     if (!question)
         return;
-    let text;
+    numAnswers++;
+    let article;
     switch (question.answer) {
         case 'm':
-            text = 'der';
+            article = 'der';
             break;
         case 'f':
-            text = 'die';
+            article = 'die';
             break;
         case 'n':
-            text = 'das';
+            article = 'das';
             break;
     }
-    numAnswers++;
-    if (answer === question.answer) {
+    const resultArticle = document.getElementById('resultArticle');
+    resultArticle.textContent = article;
+    const resultIcon = document.getElementById('resultIcon');
+    const correct = answer === question.answer;
+    if (correct) {
         numCorrect++;
-        text = '✔️ ' + text;
-        deck.answer(question.card, true);
+        resultIcon.textContent = 'check';
+        resultIcon.style.color = 'green';
     }
     else {
-        text = '❌ ' + text;
-        deck.answer(question.card, false);
+        resultIcon.textContent = 'close';
+        resultIcon.style.color = 'red';
     }
+    deck.answer(question.card, correct);
     const userData = deck.save();
     localStorage.setItem(LOCAL_STORAGE_KEY, userData);
     if (drive.isSignedIn()) {
@@ -228,12 +254,9 @@ function chooseAnswer(answer) {
     else if (drive.wasSignedIn()) {
         showPage(splashPage);
     }
-    const resultEl = document.getElementById('result');
-    if (resultEl)
-        resultEl.textContent = text;
     setTimeout(() => {
-        if (resultEl)
-            resultEl.textContent = '';
+        resultIcon.textContent = '';
+        resultArticle.textContent = '';
         draw();
     }, 1000);
     // Disable the buttons until the next question
