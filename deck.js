@@ -97,6 +97,15 @@ export class Deck {
     }
     getNumCards() { return this.cards.length; }
     getNumWords() { return this.newWords.length + this.cards.length; }
+    getLastUpdate() {
+        let lastUpdate = new Date(0);
+        for (const card of this.cards) {
+            if (card.date > lastUpdate) {
+                lastUpdate = card.date;
+            }
+        }
+        return lastUpdate;
+    }
     save() {
         const stored = this.cards.map(c => ({ word: c.word, date: c.date.toISOString(), level: c.level }));
         return JSON.stringify({ version: 0, cards: stored });

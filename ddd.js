@@ -124,10 +124,11 @@ function onLogin() {
             drive.load()
                 .then(data => {
                 log('Loaded');
-                // Only take the data from drive if it has more cards than the local data
+                // Only take the data from drive if it has more cards than the local data, or the same number of cards but a more recent date
                 if (data.length > 0) {
                     let tempDeck = new Deck(genus, data);
-                    if (tempDeck.getNumCards() > deck.getNumCards()) {
+                    if (tempDeck.getNumCards() >= deck.getNumCards() ||
+                        (tempDeck.getNumCards() === deck.getNumCards() && tempDeck.getLastUpdate() > deck.getLastUpdate())) {
                         localStorage.setItem(LOCAL_STORAGE_KEY, data);
                         begin();
                     }
