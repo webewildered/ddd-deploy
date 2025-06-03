@@ -124,10 +124,14 @@ function onLogin() {
             drive.load()
                 .then(data => {
                 log('Loaded');
+                // Only take the data from drive if it has more cards than the local data
                 if (data.length > 0) {
-                    localStorage.setItem(LOCAL_STORAGE_KEY, data);
-                    begin();
-                } // else, probably first login, so keep the local data
+                    let tempDeck = new Deck(genus, data);
+                    if (tempDeck.getNumCards() > deck.getNumCards()) {
+                        localStorage.setItem(LOCAL_STORAGE_KEY, data);
+                        begin();
+                    }
+                }
                 setLoggedIn(true);
             })
                 .catch(error => log('Error loading data: ' + error));
