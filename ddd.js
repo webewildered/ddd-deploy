@@ -79,8 +79,11 @@ function init() {
         .then(() => {
         log('All loaded');
         if (drive.isSignedIn()) {
-            setLoggedIn(true);
-            begin(); // User is already logged in
+            // User is already logged in
+            loadDriveData().then(() => {
+                setLoggedIn(true);
+                begin();
+            });
         }
         else {
             setLoggedIn(false);
@@ -115,28 +118,40 @@ function draw() {
 (_c = document.getElementById('btn-das')) === null || _c === void 0 ? void 0 : _c.addEventListener('click', () => chooseAnswer('n'));
 const splashLoginButton = document.getElementById('btn-splashLogin');
 const lateLoginButton = document.getElementById('btn-login');
+function loadDriveData() {
+    return drive.load()
+        .then(data => {
+        log('Loaded data from drive');
+        // Only take the data from drive if it has more cards than the local data, or the same number of cards but a more recent date
+        if (data.length > 0) {
+            let tempDeck = new Deck(genus, data);
+            if (deck === null ||
+                tempDeck.getNumCards() >= deck.getNumCards() ||
+                (tempDeck.getNumCards() === deck.getNumCards() && tempDeck.getLastUpdate() > deck.getLastUpdate())) {
+                log('Accepting ' + tempDeck.getNumCards() + ' from drive');
+                localStorage.setItem(LOCAL_STORAGE_KEY, data);
+                return true;
+            }
+            else if (deck !== null) {
+                log('Keeping ' + deck.getNumCards() + ' from local');
+            }
+        }
+        return false;
+    })
+        .catch(error => log('Error loading data: ' + error));
+}
 function onLogin() {
     drive.signIn((error) => {
         if (error) {
             log('Sign in error: ' + error.message);
         }
         else {
-            drive.load()
-                .then(data => {
-                log('Loaded');
-                // Only take the data from drive if it has more cards than the local data, or the same number of cards but a more recent date
-                if (data.length > 0) {
-                    let tempDeck = new Deck(genus, data);
-                    if (deck === null ||
-                        tempDeck.getNumCards() >= deck.getNumCards() ||
-                        (tempDeck.getNumCards() === deck.getNumCards() && tempDeck.getLastUpdate() > deck.getLastUpdate())) {
-                        localStorage.setItem(LOCAL_STORAGE_KEY, data);
-                        begin();
-                    }
-                }
+            loadDriveData().then((loaded) => {
                 setLoggedIn(true);
-            })
-                .catch(error => log('Error loading data: ' + error));
+                if (loaded) {
+                    begin();
+                }
+            });
         }
     });
 }
