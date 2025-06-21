@@ -36,7 +36,6 @@ function setTextAndFit(el, text, minSize = 10, maxSize = 100) {
         }
         test = (low + high) / 2;
     }
-    console.log('fit: ' + low);
     el.style.fontSize = `${low}rem`;
 }
 let deck = null;
@@ -165,6 +164,22 @@ logoutButton.addEventListener('click', () => {
     closeHamburger();
     drive.clearSignIn();
     setLoggedIn(false);
+});
+const saveButton = document.getElementById('btn-save');
+saveButton.addEventListener('click', () => {
+    closeHamburger();
+    const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (data) {
+        const blob = new Blob([data], { type: 'application/json' });
+        // Create a link element
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'der-die-das.json';
+        // Append link, trigger click, then remove link
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 });
 function setLoggedIn(loggedIn) {
     if (loggedIn) {
