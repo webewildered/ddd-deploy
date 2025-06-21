@@ -39,7 +39,7 @@ function setTextAndFit(el, text, minSize = 10, maxSize = 100) {
     console.log('fit: ' + low);
     el.style.fontSize = `${low}rem`;
 }
-let deck;
+let deck = null;
 let question = null;
 let lastWord = null;
 let drive = new GDriveAppData();
@@ -127,7 +127,8 @@ function onLogin() {
                 // Only take the data from drive if it has more cards than the local data, or the same number of cards but a more recent date
                 if (data.length > 0) {
                     let tempDeck = new Deck(genus, data);
-                    if (tempDeck.getNumCards() >= deck.getNumCards() ||
+                    if (deck === null ||
+                        tempDeck.getNumCards() >= deck.getNumCards() ||
                         (tempDeck.getNumCards() === deck.getNumCards() && tempDeck.getLastUpdate() > deck.getLastUpdate())) {
                         localStorage.setItem(LOCAL_STORAGE_KEY, data);
                         begin();
