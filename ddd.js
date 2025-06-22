@@ -181,6 +181,54 @@ saveButton.addEventListener('click', () => {
         document.body.removeChild(link);
     }
 });
+const loadButton = document.getElementById('btn-load');
+loadButton.addEventListener('click', () => {
+    closeHamburger();
+    // Create a hidden file input element
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.style.display = 'none';
+    input.onchange = () => {
+        var _a;
+        const file = (_a = input.files) === null || _a === void 0 ? void 0 : _a[0];
+        if (!file) {
+            log('No file selected.');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (typeof reader.result === 'string') {
+                try {
+                    let tempDeck = new Deck(genus, reader.result);
+                    log('Deck loaded successfully with ' + tempDeck.getNumCards() + ' cards.');
+                    localStorage.setItem(LOCAL_STORAGE_KEY, reader.result);
+                    begin();
+                }
+                catch (e) {
+                    log('Error loading deck');
+                    return;
+                }
+            }
+            else {
+                log('File could not be read as text.');
+            }
+        };
+        reader.onerror = () => {
+            log('Error reading file.');
+        };
+        reader.readAsText(file);
+    };
+    // Trigger file selection
+    document.body.appendChild(input);
+    input.click();
+    // Clean up the input element after use
+    input.addEventListener('click', () => {
+        setTimeout(() => {
+            document.body.removeChild(input);
+        }, 0);
+    });
+});
 function setLoggedIn(loggedIn) {
     if (loggedIn) {
         lateLoginButton.style.display = "none";
