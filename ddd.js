@@ -156,18 +156,15 @@ function onLogin() {
 }
 splashLoginButton.addEventListener('click', onLogin);
 lateLoginButton.addEventListener('click', () => {
-    closeHamburger();
     onLogin();
 });
 const logoutButton = document.getElementById('btn-logout');
 logoutButton.addEventListener('click', () => {
-    closeHamburger();
     drive.clearSignIn();
     setLoggedIn(false);
 });
 const saveButton = document.getElementById('btn-save');
 saveButton.addEventListener('click', () => {
-    closeHamburger();
     const data = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (data) {
         const blob = new Blob([data], { type: 'application/json' });
@@ -183,7 +180,6 @@ saveButton.addEventListener('click', () => {
 });
 const loadButton = document.getElementById('btn-load');
 loadButton.addEventListener('click', () => {
-    closeHamburger();
     // Create a hidden file input element
     const input = document.createElement('input');
     input.type = 'file';
@@ -248,7 +244,6 @@ const statsButton = document.getElementById('btn-stats');
 const statGroupSession = document.getElementById('statGroup-session');
 const statGroupSpeed = document.getElementById('statGroup-speed');
 statsButton.addEventListener('click', () => {
-    closeHamburger();
     showPage(statsPage);
     document.getElementById('stat-numWords').textContent = deck.getNumCards().toString();
     document.getElementById('stat-totalWords').textContent = deck.getNumWords().toString();
@@ -280,7 +275,6 @@ function clearDefinitions() {
 const dictButton = document.getElementById('btn-dict');
 dictButton.addEventListener('click', () => {
     clearDefinitions();
-    closeHamburger();
     if (!question) {
         return;
     }
@@ -350,31 +344,6 @@ dictButton.addEventListener('click', () => {
         .catch(error => {
         definitionMessage.innerText = `Error fetching definitions: ${error.message}`;
     });
-});
-const hamburgerButton = document.getElementById('btn-hamburger');
-const hamburgerIcon = document.getElementById('hamburgerIcon');
-let hamburgerOpen = false;
-function openHamburger() {
-    hamburgerOpen = true;
-    hamburgerIcon.textContent = 'close';
-    for (const item of document.getElementsByClassName('hamburger-item')) {
-        item.style.display = 'block';
-    }
-}
-function closeHamburger() {
-    hamburgerOpen = false;
-    hamburgerIcon.textContent = 'menu';
-    for (const item of document.getElementsByClassName('hamburger-item')) {
-        item.style.display = 'none';
-    }
-}
-hamburgerButton.addEventListener('click', () => {
-    if (hamburgerOpen) {
-        closeHamburger();
-    }
-    else {
-        openHamburger();
-    }
 });
 function chooseAnswer(answer) {
     if (!question)
